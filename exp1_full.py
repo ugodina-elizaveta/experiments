@@ -1,12 +1,8 @@
-#!/usr/bin/env python3
-# exp1_run.py – РАБОЧИЙ ЭКСПЕРИМЕНТ (QLoRA) БЕЗ ОШИБОК
-
 import argparse
 import logging
 import os
 import sys
 from datetime import datetime
-from pathlib import Path
 
 import numpy as np
 import requests
@@ -15,7 +11,7 @@ import torch.nn as nn
 from datasets import load_from_disk
 from peft import LoraConfig, TaskType, get_peft_model, prepare_model_for_kbit_training
 from sklearn.metrics import accuracy_score
-from transformers import TrainerCallback  # <-- ВАЖНО
+from transformers import TrainerCallback
 from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
@@ -38,9 +34,8 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-
 # ---------- Отправка в Telegram ----------
-def send_telegram(message, token="7504803683:AAEUEb9yplOjOiUsjVZ3GuYXs8ILni8aC-I", chat_id="962369479"):
+def send_telegram(message, token="", chat_id=""):
     try:
         url = f"https://api.telegram.org/bot{token}/sendMessage"
         data = {"chat_id": chat_id, "text": f"🤖 *QLoRA*\n{message}", "parse_mode": "Markdown"}
@@ -100,7 +95,7 @@ def main():
     parser.add_argument('--gradient_accumulation', type=int, default=16)
     parser.add_argument('--learning_rate', type=float, default=2e-4)
     parser.add_argument('--num_epochs', type=int, default=3)
-    parser.add_argument('--max_length', type=int, default=256)  # важно для памяти
+    parser.add_argument('--max_length', type=int, default=256)
     parser.add_argument('--lora_r', type=int, default=8)
     parser.add_argument('--lora_alpha', type=int, default=16)
     parser.add_argument('--lora_dropout', type=float, default=0.1)
@@ -145,7 +140,7 @@ def main():
             device_map="auto",
             trust_remote_code=True,
             torch_dtype=torch.float16,
-            use_cache=False,  # экономия памяти
+            use_cache=False,
         )
         logger.info(f"✅ Модель загружена. Параметров: {model.num_parameters():,}")
 
@@ -162,7 +157,7 @@ def main():
         )
         model = get_peft_model(model, lora_config)
         model.print_trainable_parameters()
-        model.gradient_checkpointing_enable()  # экономия памяти
+        model.gradient_checkpointing_enable()
 
         data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False, pad_to_multiple_of=8)
 
@@ -191,14 +186,13 @@ def main():
             greater_is_better=False,
             fp16=True,
             dataloader_num_workers=2,
-            report_to="none",  # отключаем MLflow
+            report_to="none",
             remove_unused_columns=False,
             optim="paged_adamw_8bit",
             max_grad_norm=0.3,
-            eval_accumulation_steps=1,  # критично против OOM
+            eval_accumulation_steps=1,
         )
 
-        # Стандартный Trainer (без переопределения log)
         trainer = Trainer(
             model=model,
             args=training_args,

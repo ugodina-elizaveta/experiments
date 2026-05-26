@@ -1,5 +1,4 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+
 """
 Эксперимент 1: Last-layer fine-tuning (дообучение только последних 2 слоёв)
 """

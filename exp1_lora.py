@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Эксперимент 1: LoRA (Low-Rank Adaptation) - обычная, не QLoRA
 """
